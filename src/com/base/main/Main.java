@@ -1,24 +1,20 @@
 package com.base.main;
 
-import java.awt.BorderLayout;
-import java.awt.EventQueue;
+import com.base.flashcard.Flashcard;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import java.awt.*;
+import java.io.File;
+import java.util.Arrays;
+
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.JTextPane;
-import javax.swing.JTextField;
-import javax.swing.JLabel;
-import java.awt.Font;
-import javax.swing.JButton;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import javax.swing.JSlider;
 
 public class Main extends JFrame {
 
 	private JPanel contentPane;
-	private JTextField textField;
+	private JTextField answerField;
 
 	/**
 	 * Launch the application.
@@ -40,6 +36,15 @@ public class Main extends JFrame {
 	 * Create the frame.
 	 */
 	public Main() {
+        //Base flashcard to make testing and moving between cards easier
+        String[] blankTags = {"example", "test", "blank"};
+        Flashcard blank = new Flashcard("Flashcard question is located here", "This is where the answer is typed", blankTags);
+        int currentCardVal = blank.index;
+
+        //Maybe separate file management class if we want to start doing more
+        String filePath = JOptionPane.showInputDialog(null, "Choose default directory for flashcard storage",
+                System.getProperty("user.home") + "\\Documents");
+
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 615, 486);
 		contentPane = new JPanel();
@@ -52,15 +57,17 @@ public class Main extends JFrame {
 		contentPane.add(panel);
 		panel.setLayout(null);
 		
-		JTextPane textPane = new JTextPane();
-		textPane.setBounds(10, 60, 461, 221);
-		panel.add(textPane);
+		JTextPane questionPane = new JTextPane();
+		questionPane.setBounds(10, 60, 461, 221);
+		panel.add(questionPane);
+        questionPane.setText("\nThe value of currentCardVal is: " + currentCardVal + "\nThe question for the card is: " +
+        Flashcard.cardList.get(currentCardVal).question);
 		
-		textField = new JTextField();
-		textField.setBounds(10, 321, 461, 20);
-		panel.add(textField);
-		textField.setColumns(10);
-		
+		answerField = new JTextField();
+		answerField.setBounds(10, 321, 461, 20);
+		panel.add(answerField);
+		answerField.setColumns(10);
+
 		JLabel lblFlashcard = new JLabel("Flashcard");
 		lblFlashcard.setFont(new Font("Times New Roman", Font.PLAIN, 12));
 		lblFlashcard.setBounds(10, 34, 82, 14);
@@ -79,25 +86,47 @@ public class Main extends JFrame {
 		btnEditFlashcard.setBounds(10, 359, 110, 23);
 		panel.add(btnEditFlashcard);
 		
-		JButton btnNewButton = new JButton("Next Flashcard");
-		btnNewButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-			}
-		});
-		btnNewButton.setBounds(130, 359, 110, 23);
-		panel.add(btnNewButton);
-		
-		JButton btnNewButton_1 = new JButton("Add tags");
-		btnNewButton_1.addActionListener(new ActionListener() {
+		JButton btnNextCard = new JButton("Next Flashcard");
+		btnNextCard.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //Sloppy workaround
+               questionPane.setText(Flashcard.cardList.get(currentCardVal).nextCard().question);
+
+            }
+        });
+		btnNextCard.setBounds(130, 359, 110, 23);
+		panel.add(btnNextCard);
+
+		JButton btnAddTags = new JButton("Add tags");
+		//On action pops up a JOptionPane that prompts the user to input their tags
+        btnAddTags.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
+				Flashcard.cardList.get(currentCardVal).tags = (JOptionPane.showInputDialog("Type in comma separated tags for the current notecard. " +
+						"e.g. science, biology, cell function, active transport").split(", "));
+
+
 			}
 		});
-		btnNewButton_1.setBounds(250, 359, 110, 23);
-		panel.add(btnNewButton_1);
-		
-		JButton btnNewButton_2 = new JButton("Edit tags");
-		btnNewButton_2.setBounds(370, 359, 110, 23);
-		panel.add(btnNewButton_2);
+		btnAddTags.setBounds(250, 359, 110, 23);
+		panel.add(btnAddTags);
+
+		JButton btnEditTags = new JButton("Edit tags");
+        btnEditTags.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                StringBuilder sb = new StringBuilder(Arrays.toString(Flashcard.cardList.get(currentCardVal).tags));
+                sb.deleteCharAt(0);
+                sb.deleteCharAt(sb.length()-1);
+                String noBrackets = sb.toString();
+
+                Flashcard.cardList.get(currentCardVal).tags = (JOptionPane.showInputDialog("Edit the current set of tags with the removal or adding of " +
+                        "new tags in the same format", noBrackets).split(", "));
+            }
+        });
+		btnEditTags.setBounds(370, 359, 110, 23);
+		panel.add(btnEditTags);
 		
 		JSlider slider = new JSlider();
 		slider.setBounds(10, 410, 461, 26);
@@ -120,8 +149,18 @@ public class Main extends JFrame {
 		label_2.setBounds(235, 399, 12, 14);
 		panel.add(label_2);
 		
-		JButton btnNewButton_3 = new JButton("Open Folder");
-		btnNewButton_3.setBounds(481, 94, 110, 23);
-		panel.add(btnNewButton_3);
+		JButton btnOpenFolder = new JButton("Open Folder");
+		btnOpenFolder.setBounds(481, 94, 110, 23);
+        btnOpenFolder.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    Desktop.getDesktop().open(new File(filePath));
+                }catch(Exception exc){
+                    JOptionPane.showMessageDialog(null, exc.getMessage());
+                }
+            }
+        });
+		panel.add(btnOpenFolder);
 	}
 }
